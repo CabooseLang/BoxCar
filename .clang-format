@@ -1,0 +1,9 @@
+---
+Language: Cpp
+BasedOnStyle: Mozilla
+IndentCaseLabels: true
+IndentWidth: 4
+PointerAlignment: Left
+SortIncludes: true
+BreakBeforeBraces: Attach
+...
