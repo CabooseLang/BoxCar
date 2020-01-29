@@ -9,7 +9,11 @@
 
 void initPackage(Package* package, const char* name, Ref version) {
     package->isPrivate = false;
-    package->dependencies = NULL;
+
+    DependencyArray dependencies;
+    initDependencyArray(&dependencies);
+
+    package->dependencies = dependencies;
     package->name = name;
     package->version = version;
 }
