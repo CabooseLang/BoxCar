@@ -11,7 +11,7 @@
 typedef struct sPackage {
     char* name;
     Ref version;
-    Dependency* dependencies;
+    DependencyArray dependencies;
     bool isPrivate;
 } Package;
 

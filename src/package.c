@@ -36,7 +36,21 @@ void initPackageFromFile(Package* package, const char* fileName) {
         exit(1);
     }
 
-    package->dependencies = NULL;
+
+    // Parse version.
+    cJSON* versionObject = cJSON_GetObjectItemCaseSensitive(jsonObject, "version");
+
+    // Version must be a string.
+    if (cJSON_IsString(nameObject)) package->version = nameObject->string;
+    else {
+        logErr("'version' field in boxcar.json must be a string.");
+        exit(1);
+    }
+
+    DependencyArray dependencies;
+    initDependencyArray(&dependencies);
+
+    package->dependencies = dependencies;
 
     cJSON* dependenciesObject = cJSON_GetObjectItemCaseSensitive(jsonObject, "dependencies");
     if (cJSON_IsArray(dependenciesObject)) {
@@ -45,9 +59,25 @@ void initPackageFromFile(Package* package, const char* fileName) {
         cJSON_ArrayForEach(dependencyObject, dependenciesObject) {
             Dependency dependency;
 
+            // Parse dependency name
             cJSON* dependencyNameObject = cJSON_GetObjectItemCaseSensitive(dependencyObject, "name");
-            
+
+            // Dependency name must be a string
             if (cJSON_IsString(dependencyNameObject)) dependency.name = dependencyNameObject->string;
+            else {
+                logErr("'name' field in boxcar.json dependency must be a string.");
+                exit(1);
+            }
+            
+            // Parse dependency version
+            cJSON* dependencyVersionObject = cJSON_GetObjectItemCaseSensitive(dependencyObject, "version");
+
+            // Dependency version must be a string.
+            if (cJSON_IsString(dependencyVersionObject)) dependency.name = dependencyVersionObject->string;
+            else {
+                logErr("'version' field in boxcar.json dependency must be a string.");
+                exit(1);
+            }
         }
     }
 }
