@@ -7,7 +7,7 @@
 #include "util.h"
 #include "log.h"
 
-void initPackage(Package* package, const char* name, Ref version) {
+void initPackage(Package* package, char* name, Ref version) {
     package->isPrivate = false;
 
     DependencyArray dependencies;
@@ -40,7 +40,6 @@ void initPackageFromFile(Package* package, const char* fileName) {
         exit(1);
     }
 
-
     // Parse version.
     cJSON* versionObject = cJSON_GetObjectItemCaseSensitive(jsonObject, "version");
 
@@ -51,6 +50,7 @@ void initPackageFromFile(Package* package, const char* fileName) {
         exit(1);
     }
 
+    // Initialize a new dependency array
     DependencyArray dependencies;
     initDependencyArray(&dependencies);
 

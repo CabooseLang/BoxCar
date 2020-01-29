@@ -21,7 +21,7 @@ typedef struct sPackage {
  * @param name The name of the package.
  * @param version The version of the package.
  */
-void initPackage(Package* package, const char* name, Ref version);
+void initPackage(Package* package, char* name, Ref version);
 
 /**
  * Initialize a package object using a boxcar.json file.
