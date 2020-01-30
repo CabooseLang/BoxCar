@@ -16,9 +16,9 @@ class RequestHandler {
     RequestHandler& operator=(const RequestHandler&) = delete;
 
     /// Construct with a directory containing files to be served.
-    explicit RequestHandler(const std::string& docRoot);
+    explicit RequestHandler(std::string docRoot);
 
-    /// Handle a request and produce a reply.
+    /// Handle a Request and produce a Reply.
     void handleRequest(const Request& req, Reply& rep);
 
   private:

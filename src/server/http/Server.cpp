@@ -11,9 +11,6 @@ Server::Server(const std::string& address,
   , acceptor(this->ioContext)
   , connectionManager()
   , requestHandler(doc_root) {
-    // Register to handle the signals that indicate when the server should exit.
-    // It is safe to register for the same signal multiple times in a program,
-    // provided all registration for the specified signal is made through Asio.
     this->signals.add(SIGINT);
     this->signals.add(SIGTERM);
 
@@ -48,7 +45,7 @@ Server::do_accept() {
             return;
         if (!ec)
             this->connectionManager.start(
-              std::make_shared<connection>(std::move(socket),
+              std::make_shared<Connection>(std::move(socket),
                                            this->connectionManager,
                                            this->requestHandler));
         do_accept();
@@ -63,7 +60,7 @@ Server::do_await_stop() {
           // operations. Once all operations have finished the io_context::run()
           // call will exit.
           this->acceptor.close();
-          this->connectionManager.stop_all();
+          this->connectionManager.stopAll();
       });
 }
 

@@ -9,15 +9,15 @@
 //
 
 #include "Connection.hpp"
+#include "ConnectionManager.hpp"
 #include "RequestHandler.hpp"
-#include "connection_manager.hpp"
 #include <utility>
 #include <vector>
 
 namespace BoxCar {
 namespace Http {
 
-connection::connection(boost::asio::ip::tcp::socket socket,
+Connection::Connection(boost::asio::ip::tcp::socket socket,
                        ConnectionManager& manager,
                        RequestHandler& handler)
   : socket(std::move(socket))
@@ -25,61 +25,62 @@ connection::connection(boost::asio::ip::tcp::socket socket,
   , requestHandler(handler) {}
 
 void
-connection::start() {
-    this->do_read();
+Connection::start() {
+    this->doRead();
 }
 
 void
-connection::stop() {
+Connection::stop() {
     this->socket.close();
 }
 
 void
-connection::do_read() {
+Connection::doRead() {
     auto self(shared_from_this());
-    socket_.async_read_some(
-      boost::asio::buffer(buffer_),
+    this->socket.async_read_some(
+      boost::asio::buffer(this->buffer),
       [this, self](boost::system::error_code ec,
-                   std::size_t bytes_transferred) {
+                   std::size_t bytesTransferred) {
           if (!ec) {
-              request_parser::result_type result;
-              std::tie(result, std::ignore) = request_parser_.parse(
-                request_, buffer_.data(), buffer_.data() + bytes_transferred);
+              RequestParser::ResultType result;
+              std::tie(result, std::ignore) = this->requestParser.parse(
+                this->request,
+                this->buffer.data(),
+                this->buffer.data() + bytesTransferred);
 
-              if (result == request_parser::good) {
-                  request_handler_.handle_request(request_, reply_);
-                  do_write();
-              } else if (result == request_parser::bad) {
-                  reply_ = reply::stock_reply(reply::bad_request);
-                  do_write();
-              } else {
-                  do_read();
-              }
-          } else if (ec != boost::asio::error::operation_aborted) {
-              connection_manager_.stop(shared_from_this());
-          }
+              if (result == RequestParser::ResultType::GOOD) {
+                  this->requestHandler.handleRequest(this->request,
+                                                     this->reply);
+                  doWrite();
+              } else if (result == RequestParser::ResultType::BAD) {
+                  reply = Reply::stockReply(StatusType::BAD_REQUEST);
+                  doWrite();
+              } else
+                  doRead();
+          } else if (ec != boost::asio::error::operation_aborted)
+              this->connectionManager.stop(shared_from_this());
       });
 }
 
 void
-connection::do_write() {
+Connection::doWrite() {
     auto self(shared_from_this());
     boost::asio::async_write(
-      socket_,
-      reply_.to_buffers(),
+      this->socket,
+      this->reply.toBuffers(),
       [this, self](boost::system::error_code ec, std::size_t) {
           if (!ec) {
               // Initiate graceful connection closure.
               boost::system::error_code ignored_ec;
-              socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both,
-                               ignored_ec);
+              this->socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both,
+                                    ignored_ec);
           }
 
           if (ec != boost::asio::error::operation_aborted) {
-              connection_manager_.stop(shared_from_this());
+              this->connectionManager.stop(shared_from_this());
           }
       });
 }
 
-} // namespace server
-} // namespace http
+}
+}

@@ -1,31 +1,31 @@
 #include "RequestHandler.hpp"
 #include "MimeTypes.hpp"
-#include "reply.hpp"
-#include "request.hpp"
+#include "Reply.hpp"
+#include "Request.hpp"
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace BoxCar {
 namespace Http {
 
-RequestHandler::RequestHandler(const std::string& docRoot)
-  : docRoot(docRoot) {}
+RequestHandler::RequestHandler(std::string docRoot)
+  : docRoot(std::move(docRoot)) {}
 
 void
-RequestHandler::handleRequest(const BoxCar::Http::request& req,
-                              BoxCar::Http::reply& rep) {
+RequestHandler::handleRequest(const Request& req, Reply& rep) {
     // Decode url to path.
     std::string requestPath;
-    if (!url_decode(req.uri, requestPath)) {
-        rep = reply::stock_reply(reply::bad_request);
+    if (!urlDecode(req.uri, requestPath)) {
+        rep = Reply::stockReply(StatusType::BAD_REQUEST);
         return;
     }
 
     // Request path must be absolute and not contain "..".
     if (requestPath.empty() || requestPath[0] != '/' ||
         requestPath.find("..") != std::string::npos) {
-        rep = reply::stock_reply(reply::bad_request);
+        rep = Reply::stockReply(StatusType::BAD_REQUEST);
         return;
     }
 
@@ -45,12 +45,12 @@ RequestHandler::handleRequest(const BoxCar::Http::request& req,
     std::string full_path = this->docRoot + requestPath;
     std::ifstream is(full_path.c_str(), std::ios::in | std::ios::binary);
     if (!is) {
-        rep = reply::stock_reply(reply::not_found);
+        rep = Reply::stockReply(StatusType::NOT_FOUND);
         return;
     }
 
-    // Fill out the reply to be sent to the client.
-    rep.status = reply::ok;
+    // Fill out the Reply to be sent to the client.
+    rep.status = StatusType::OK;
     char buf[512];
     while (is.read(buf, sizeof(buf)).gcount() > 0)
         rep.content.append(buf, is.gcount());
@@ -58,7 +58,7 @@ RequestHandler::handleRequest(const BoxCar::Http::request& req,
     rep.headers[0].name = "Content-Length";
     rep.headers[0].value = std::to_string(rep.content.size());
     rep.headers[1].name = "Content-Type";
-    rep.headers[1].value = mime_types::extension_to_type(extension);
+    rep.headers[1].value = extensionToMimeType(extension);
 }
 
 bool
