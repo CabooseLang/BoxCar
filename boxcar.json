@@ -1,0 +1,10 @@
+{
+  "name": "BoxCar Test",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "name": "test-dep",
+      "version": "0.0.1"
+    }
+  ]
+}
