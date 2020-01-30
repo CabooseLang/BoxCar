@@ -12,6 +12,12 @@
 #include "Dependency.hpp"
 
 namespace BoxCar {
+namespace Packaging {
+typedef struct {
+    bool valid;
+    std::string error;
+} PackageValidity;
+
 /**
  * A package object.
  * @author RailRunner16
@@ -94,10 +100,17 @@ class Package {
      */
     void installAllDependencies();
 
+    /**
+     * Validate the metadata for this package.
+     * @return Is this package valid?
+     */
+    PackageValidity validate();
+
   private:
     std::string name, version;
     std::vector<Dependency> dependencies;
 };
+}
 }
 
 #endif

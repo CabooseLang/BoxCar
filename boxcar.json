@@ -1,9 +1,9 @@
 {
-  "name": "BoxCar Test",
+  "name": "boxcar.test",
   "version": "1.0.0",
   "dependencies": [
     {
-      "name": "test-dep",
+      "name": "test dep",
       "version": "0.0.1"
     }
   ]

@@ -1,17 +1,19 @@
 #include "Package.hpp"
 #include "Logger.hpp"
+#include "Validation.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/regex.hpp>
 
 //
 // Constructors & Destructors
 //
 
-BoxCar::Package::Package(std::string name) {
+BoxCar::Packaging::Package::Package(std::string name) {
     this->name = name;
 }
 
-BoxCar::Package::Package() {
+BoxCar::Packaging::Package::Package() {
     Package("");
 }
 
@@ -19,23 +21,23 @@ BoxCar::Package::Package() {
 // Getters & Setters
 //
 
-void BoxCar::Package::setName(std::string newName) {
+void BoxCar::Packaging::Package::setName(std::string newName) {
     this->name = newName;
 }
 
-void BoxCar::Package::setVersion(std::string newVersion) {
+void BoxCar::Packaging::Package::setVersion(std::string newVersion) {
     this->version = newVersion;
 }
 
-std::string BoxCar::Package::getName() {
+std::string BoxCar::Packaging::Package::getName() {
     return this->name;
 }
 
-std::string BoxCar::Package::getVersion() {
+std::string BoxCar::Packaging::Package::getVersion() {
     return this->version;
 }
 
-std::vector<BoxCar::Dependency> BoxCar::Package::getDependencies() {
+std::vector<BoxCar::Packaging::Dependency> BoxCar::Packaging::Package::getDependencies() {
     return this->dependencies;
 }
 
@@ -43,7 +45,7 @@ std::vector<BoxCar::Dependency> BoxCar::Package::getDependencies() {
 // Data Methods
 //
 
-void BoxCar::Package::readFromPropertyTree(const boost::property_tree::ptree& pt) {
+void BoxCar::Packaging::Package::readFromPropertyTree(const boost::property_tree::ptree& pt) {
     this->name = pt.get<std::string>("name");
     this->version = pt.get<std::string>("version");
 
@@ -55,7 +57,7 @@ void BoxCar::Package::readFromPropertyTree(const boost::property_tree::ptree& pt
     }
 }
 
-void BoxCar::Package::readFromJsonString(const std::string &json) {
+void BoxCar::Packaging::Package::readFromJsonString(const std::string &json) {
     std::stringstream stream;
     stream << json;
 
@@ -65,15 +67,18 @@ void BoxCar::Package::readFromJsonString(const std::string &json) {
     this->readFromPropertyTree(pt);
 }
 
-void BoxCar::Package::readFromJsonFile(const std::string& filePath) {
+void BoxCar::Packaging::Package::readFromJsonFile(const std::string& filePath) {
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(filePath, pt);
 
     this->readFromPropertyTree(pt);
 }
 
-void BoxCar::Package::installAllDependencies() {
-    BoxCar::Logging::Logger::inf("Installing all dependencies...");
+void BoxCar::Packaging::Package::installAllDependencies() {
+    std::stringstream installingAllStream;
+    installingAllStream << "Installing all dependencies of package " << this->name << "@" << this->version << "...";
+
+    BoxCar::Logging::Logger::inf(installingAllStream.str());
 
     BOOST_FOREACH(Dependency& dependency, this->dependencies) {
         std::stringstream installMessageStream;
@@ -81,4 +86,33 @@ void BoxCar::Package::installAllDependencies() {
 
         BoxCar::Logging::Logger::inf(installMessageStream.str());
     }
+}
+
+BoxCar::Packaging::PackageValidity BoxCar::Packaging::Package::validate() {
+    if (!BoxCar::Validation::validateName(this->name)) return PackageValidity {
+        false,
+        "'name' field must only contain alphanumeric characters, underscores, hyphens, and periods."
+    };
+
+    if (!BoxCar::Validation::validateVersion(this->version)) return PackageValidity {
+        false,
+        "'version' field must be a valid version (x.x.x)."
+    };
+
+    BOOST_FOREACH(Dependency& dependency, this->dependencies) {
+        if (!BoxCar::Validation::validateName(dependency.getName())) return PackageValidity {
+            false,
+            "'name' field of dependency must only contain alphanumeric characters, underscores, hyphens, and periods."
+        };
+
+        if (!BoxCar::Validation::validateVersion(dependency.getVersion())) return PackageValidity {
+            false,
+            "'version' field of dependency must be a valid version (x.x.x)."
+        };
+    }
+
+    return PackageValidity {
+        true,
+        ""
+    };
 }

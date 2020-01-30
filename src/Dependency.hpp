@@ -5,6 +5,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 namespace BoxCar {
+namespace Packaging {
 /**
  * A dependency object.
  * @author RailRunner16
@@ -81,6 +82,7 @@ class Dependency {
     std::string name, version;
     std::vector<Dependency> subDependencies;
 };
+}
 }
 
 #endif
